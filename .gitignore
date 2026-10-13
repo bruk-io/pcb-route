@@ -1,6 +1,5 @@
 # Built routers: see README for the build commands
-/mojo/negotiate
-/negotiate6
+/router/negotiate
 __pycache__/
 .pytest_cache/
 # KiCad's per-user view settings

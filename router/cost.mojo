@@ -1,4 +1,4 @@
-"""Integer step costs, as the C++ router computes them."""
+"""Integer step costs: a straight step is `SCALE` units, times the cell's price."""
 
 from std.math import floor
 

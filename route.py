@@ -1,10 +1,10 @@
-"""A drop-in for Freerouting's command line: read a Specctra DSN and a KiCad board, write a session.
+"""Route a KiCad board: read a Specctra DSN and the board, write a session, on Freerouting's command line.
 
     python route.py -de board.dsn -do board.ses [-mp 40] --board prerouted.kicad_pcb
                     [--previous golden/board.ses [--previous-board golden/prerouted.kicad_pcb]]
                     [--max-seconds 600] [--min-width 0.2] [--seed 0] [--via-cost 16]
 
-What it keeps from Freerouting's contract (pcbkit's route/freerouting.py relies on each):
+What it keeps from Freerouting's command line (pcbkit's route/freerouting.py relies on each):
   * the -de / -do / -mp flags; the session imports with pcbnew's ImportSpecctraSES;
   * the log lines "Starting auto-routing...", "Auto-routing was completed in N seconds." and
     "Saving '<file>'...";
@@ -40,7 +40,7 @@ sys.path.insert(0, str(HERE))
 import incremental  # noqa: E402
 import ses  # noqa: E402
 
-ROUTER = HERE / "mojo" / "negotiate"  # the Mojo router; negotiate6.cpp is the reference it must match
+ROUTER = HERE / "router" / "negotiate"  # build: see README
 EXPORTER = HERE / "board.py"
 KICAD_PYTHON = os.environ.get("KICAD_PYTHON", "/usr/bin/python3")
 CACHE_KEEP = 8  # board exports kept (about 190 MB each on the spotmicro carrier); the least recently used go
@@ -127,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--via-cost", type=float, default=16.0,
                         help="mm of track one via is worth in the finished route; raise it for fewer vias, at more time")
     parser.add_argument("--pitch", type=float, default=0.05)
-    parser.add_argument("--cache", default=os.environ.get("DROPIN_CACHE", str(Path.home() / ".cache" / "pcb-dropin")))
+    parser.add_argument("--cache", default=os.environ.get("PCB_ROUTE_CACHE", str(Path.home() / ".cache" / "pcb-route")))
     args = parser.parse_args(argv)
 
     started = time.monotonic()
@@ -148,7 +148,7 @@ def main(argv: list[str] | None = None) -> int:
     dsn = ses.read_dsn(args.dsn)
     work = cache / f"run-{os.getpid()}"
     work.mkdir(parents=True, exist_ok=True)
-    env = {**os.environ, "NEGOTIATE_PATIENCE": "10", "NEGOTIATE_WARMUP": "30", "NEGOTIATE_LAZY_VIAS": "1", "NEGOTIATE_TIDY": "1"}
+    env = {**os.environ, "NEGOTIATE_PATIENCE": "10", "NEGOTIATE_WARMUP": "30"}
     # A --via-cost below negotiation's own makes negotiation's vias that cheap, and needs no via pass.
     via_factor = min(VIA_FACTOR, args.via_cost / NEGOTIATION_VIA_MM)
     if args.via_cost > NEGOTIATION_VIA_MM * VIA_FACTOR:

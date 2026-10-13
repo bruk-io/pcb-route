@@ -14,6 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 HERE = Path(__file__).resolve().parents[1]
@@ -132,13 +133,50 @@ def test_patches_chain(tmp_path: Path, base: Path) -> None:
     _same(full, patched)
 
 
-def test_the_router_agrees_with_the_via_sites(tmp_path: Path, base: Path) -> None:
-    """The exporter works out where each net may drill; the router's own rule must give the same."""
+def test_the_via_sites_follow_from_the_maps(tmp_path: Path, base: Path) -> None:
+    """The exporter works out where each net may drill (and patches it after an edit); worked out
+    again here from its plain via map and the owner map, by the rule the router relies on, it must
+    agree: a via needs its whole blob, on every layer, to be enterable by the one net."""
     board = _edited(tmp_path, "move", "move")
     patched = tmp_path / "patched.board"
     _export(board, patched, previous=base)
-    done = subprocess.run([str(HERE / "negotiate6"), str(patched), "x", "span_asc", "0", "0.5", "1.6", "0.5", "1.2",
-                           str(tmp_path / "t.dump"), "12"], capture_output=True, text=True, timeout=300,
-                          env={"NEGOTIATE_CHECK_SITES": "1", "NEGOTIATE_MAX_ROUNDS": "1", "NEGOTIATE_SECONDS": "1"})
-    reports = [line for line in done.stderr.splitlines() if line.startswith("sites class")]
-    assert reports and all(line.endswith(": 0 cells differ") for line in reports), reports
+    for cls, (exported, recomputed) in enumerate(_via_sites(patched)):
+        assert np.array_equal(exported, recomputed), f"class {cls}: {int((exported != recomputed).sum())} cells differ"
+
+
+def _via_sites(path: Path):
+    """Per class, the board file's via sites and the same worked out from its other maps."""
+    free, nobody = -1, -2
+    raw = path.read_bytes()
+    layers, rows, cols, k, _, _ = np.frombuffer(raw, np.int32, 6)
+    offset = 24
+    blob = np.frombuffer(raw, np.int32, k, offset) / 1000.0
+    offset += 4 * k + 4 * k * k
+    plane, n = rows * cols, rows * cols * layers
+
+    def read(count: int) -> np.ndarray:
+        nonlocal offset
+        values = np.frombuffer(raw, np.int16, count, offset)
+        offset += 2 * count
+        return values
+
+    trace = [read(n) for _ in range(k)]
+    plain = [read(plane) for _ in range(k)]
+    core = [read(n) for _ in range(k)]
+    read(n)  # the pad map
+    sites = [read(plane) for _ in range(k)]
+    for cls in range(k):
+        owner = np.where((trace[cls] == nobody) & (core[cls] >= 0), core[cls], trace[cls]).reshape(layers, rows, cols)
+        who = plain[cls].reshape(rows, cols).copy()
+        reach = int(np.floor(blob[cls]))
+        for dr in range(-reach, reach + 1):
+            for dc in range(-reach, reach + 1):
+                if dr * dr + dc * dc > blob[cls] ** 2:
+                    continue
+                for layer in range(layers):
+                    here = np.full((rows, cols), nobody, np.int16)  # past the edge: no via
+                    here[max(0, -dr):rows - max(0, dr), max(0, -dc):cols - max(0, dc)] = \
+                        owner[layer, max(0, dr):rows + min(0, dr), max(0, dc):cols + min(0, dc)]
+                    joins = ((who == free) | (who == here)) & (here != nobody)
+                    who = np.where(here == free, who, np.where(joins, here, nobody)).astype(np.int16)
+        yield sites[cls].reshape(rows, cols), who

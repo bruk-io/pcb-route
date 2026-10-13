@@ -1,18 +1,17 @@
-"""Negotiated-congestion router for the drop-in: the Mojo port of negotiate6.cpp.
+"""Negotiated-congestion router: routes every net on the grid `board.py` wrote, negotiates until
+no two nets share a cell, takes vias out in via passes, straightens the result and writes it.
 
     negotiate <board> <label> <order> <seed> <present_start> <present_growth>
               <history_step> <via_factor> [dump [weight_tenths]]
 
-Same board file, environment variables, log lines and dump as the C++ router, and the same
-order of work, so on the same input both write the same dump, byte for byte. What `route.py`
-does not use is left out: the reach report, NEGOTIATE_HISTORY_IN/OUT, NEGOTIATE_CONFLICTS and
-NEGOTIATE_CHECK_SITES. The random net order (seed 4 and up) shuffles with its own Fisher-Yates
-over mt19937, so it differs from libstdc++'s `std::shuffle`; the other orders and a seed's price
-jitter match the C++ router.
+`order` is span_asc, span_desc, pads_desc, area_desc or random (a Fisher-Yates shuffle over
+mt19937). A non-zero seed also jitters every cell's starting price.
 
 Environment: NEGOTIATE_PRESET (the previous route still standing), NEGOTIATE_KEPT_OUT (where to
 list the nets that kept it), NEGOTIATE_KEPT_PRICE, NEGOTIATE_MAX_ROUNDS, NEGOTIATE_PATIENCE,
-NEGOTIATE_WARMUP, NEGOTIATE_SECONDS, NEGOTIATE_ONLY and NEGOTIATE_TRACE.
+NEGOTIATE_WARMUP, NEGOTIATE_SECONDS, NEGOTIATE_VIA_PASS (the via factor for via passes; none
+when unset), NEGOTIATE_VIA_PASSES, NEGOTIATE_VIA_PASS_ROUNDS, NEGOTIATE_ONLY and
+NEGOTIATE_TRACE.
 """
 
 from std.collections import Set
@@ -62,11 +61,6 @@ struct Settings(Movable):
     var kept_out: String
     var only: String
     var trace: Bool
-    var lazy_vias: Bool
-    """See `Search.lazy_vias`."""
-    var tidy: Bool
-    """Tidy the finished route (see `tidy`). Off, the result is the C++
-    router's."""
     var via_pass: Float64
     """The via factor for via passes once negotiation has settled; 0 for
     none."""
@@ -87,8 +81,6 @@ struct Settings(Movable):
         self.kept_out = getenv("NEGOTIATE_KEPT_OUT")
         self.only = getenv("NEGOTIATE_ONLY")
         self.trace = getenv("NEGOTIATE_TRACE") != ""
-        self.lazy_vias = getenv("NEGOTIATE_LAZY_VIAS") != ""
-        self.tidy = getenv("NEGOTIATE_TIDY") != ""
         self.via_pass = _real(getenv("NEGOTIATE_VIA_PASS"), 0.0)
         self.via_pass_rounds = _number(getenv("NEGOTIATE_VIA_PASS_ROUNDS"), 15)
         self.via_passes = _number(getenv("NEGOTIATE_VIA_PASSES"), 1)
@@ -216,7 +208,7 @@ def write_dump(
 def write_kept(path: String, nets: List[Net]):
     """Lists the nets whose previous route still stands, one id per line.
 
-    As the C++ router: a list it cannot write does not cost the result.
+    A list it cannot write does not cost the result.
     """
     var text = String()
     for ref net in nets:
@@ -426,7 +418,7 @@ def main() raises:
             file=stderr,
         )
         exit(1)
-    # Read as the C++ router reads it: unsigned(atoll(...)).
+    # Read as unsigned 32 bits, so a negative seed still jitters the prices.
     var seed = UInt32(atol(args[4]) & 0xFFFFFFFF)
     var schedule = Schedule(
         atof(args[5]), atof(args[6]), Float32(atof(args[7]))
@@ -461,7 +453,6 @@ def main() raises:
         print("the grid has more than 2^31 cells", file=stderr)
         exit(1)
     var search = Search(board, via_factor, weight_tenths)
-    search.lazy_vias = settings.lazy_vias
     var congestion = Congestion(board)
     var stop = StopSignals()
 
@@ -574,8 +565,7 @@ def main() raises:
                 net.dead = True
     # Tidying takes well under a second and only ever uses clear cells, so a
     # stopped run is tidied too.
-    if settings.tidy:
-        tidy(nets, board, congestion, search)
+    tidy(nets, board, congestion, search)
     if settings.kept_out:
         write_kept(settings.kept_out, nets)
     if len(args) > 9:

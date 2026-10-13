@@ -1,11 +1,12 @@
-"""What route.py's router settings add to the C++ router's route, on the spotmicro edit: tidying
-straightens the grid's staircases, via passes take vias out (or are put back), and together, as
-route.py runs them on a full and an incremental route, KiCad DRC finds no copper problem.
+"""What the router's finishing steps do on the spotmicro edit: tidying straightens the grid's
+staircases, via passes take vias out (or are put back), and on a full and an incremental route
+run by route.py, KiCad DRC finds no copper problem.
 """
 
 from __future__ import annotations
 
 import json
+import math
 import os
 import subprocess
 import sys
@@ -19,12 +20,12 @@ import ses  # noqa: E402
 
 pytestmark = pytest.mark.skipif(not (SPOT / "golden").exists(), reason="the spotmicro carrier is not in boards/spot")
 
-FULL = {"NEGOTIATE_PATIENCE": "10", "NEGOTIATE_WARMUP": "30", "NEGOTIATE_MAX_ROUNDS": "40", "NEGOTIATE_LAZY_VIAS": "1"}
+FULL = {"NEGOTIATE_PATIENCE": "10", "NEGOTIATE_WARMUP": "30", "NEGOTIATE_MAX_ROUNDS": "40"}
 
 
 def _route(tmp: Path, grid: Path, name: str, env: dict[str, str]) -> dict:
     dump = tmp / f"{name}.dump"
-    subprocess.run([str(HERE / "mojo" / "negotiate"), str(grid), "x", "span_asc", "0", "0.2", "1.3", "0.3", "1.2", str(dump), "12"],
+    subprocess.run([str(HERE / "router" / "negotiate"), str(grid), "x", "span_asc", "0", "0.2", "1.3", "0.3", "1.2", str(dump), "12"],
                    check=True, capture_output=True, timeout=600, env={**os.environ, **FULL, **env})
     return ses.segments(dump, json.loads(grid.with_suffix(".meta.json").read_text())) | {"dump": str(dump)}
 
@@ -34,12 +35,12 @@ def plain(tmp_path_factory, edited) -> dict:
     return _route(tmp_path_factory.mktemp("plain"), edited[0], "plain", {})
 
 
-def test_tidying_straightens_track_without_a_conflict(tmp_path: Path, edited, plain) -> None:
-    tidied = _route(tmp_path, edited[0], "tidied", {"NEGOTIATE_TIDY": "1"})
-    assert plain["status"]["conflicted"] == 0 and tidied["status"]["conflicted"] == 0
-    assert tidied["status"]["incomplete"] == plain["status"]["incomplete"]
-    assert len(tidied["vias"]) == len(plain["vias"])
-    assert len(tidied["segments"]) < len(plain["segments"]) / 3
+def test_tidying_leaves_straight_track_without_a_conflict(plain) -> None:
+    """Untidied, the grid's staircases made 6,864 pieces on this route, 5,019 of them under 0.25 mm."""
+    assert plain["status"]["conflicted"] == 0
+    lengths = [math.hypot(s["x2"] - s["x1"], s["y2"] - s["y1"]) for s in plain["segments"]]
+    assert len(lengths) < 2000
+    assert sum(length < 0.25 for length in lengths) < len(lengths) / 4
 
 
 def test_via_passes_take_vias_out_without_a_conflict(tmp_path: Path, edited, plain) -> None:

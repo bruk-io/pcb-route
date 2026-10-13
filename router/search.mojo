@@ -36,11 +36,6 @@ struct Search(Movable):
 
     var weight_tenths: Int
     """The estimate is multiplied by this over ten; above 10 trades path cost for speed."""
-    var lazy_vias: Bool
-    """Price a via site only when the cheapest via there could be next on
-    the cheapest path, not when its cell is expanded. The paths found are
-    as cheap; ties may go another way, so off, the search is the C++
-    router's."""
     var expansions: Int
     """Cells expanded, all searches together."""
     var search_ns: Int
@@ -67,7 +62,6 @@ struct Search(Movable):
     ):
         var n, plane = board.cells(), board.plane()
         self.weight_tenths = weight_tenths
-        self.lazy_vias = False
         self.expansions, self.search_ns = 0, 0
         self._diagonal = llround(Float64(SCALE) * sqrt(2.0))
         self._nodes = ZeroedBuffer[_Node](n)
@@ -283,23 +277,16 @@ struct Search(Movable):
                 step(cell - cols + 1, r - 1, c + 1, diagonal)
             if north and west and passable(cell - cols - 1):
                 step(cell - cols - 1, r - 1, c - 1, diagonal)
+            # A via is priced only when its turn comes: it is queued at the
+            # cheapest a via can be (a price multiple of 1), and most queued
+            # vias never come up, since a cheaper path reaches the target
+            # first. The paths found are as cheap as pricing every site.
             var drill = sites[in_plane]
-            if (
-                self.lazy_vias
-                and board.layers > 1
-                and (drill == FREE or Int(drill) == id)
-            ):
-                # Queued at the cheapest a via can be: a price multiple of 1.
+            if board.layers > 1 and (drill == FREE or Int(drill) == id):
                 self._push_entry(
                     UInt32(cell) | _VIA_EVENT,
                     here + self._via_units * SCALE + here_estimate,
                 )
-            elif board.layers > 1 and (drill == FREE or Int(drill) == id):
-                var hop = here + self._via_cost(in_plane, board, prices, blob)
-                for other in range(board.layers):
-                    var above = other * plane + in_plane
-                    if above != cell and self._improves(above, hop, cell):
-                        self._push(above, hop + here_estimate)
         for level in range(self._level, self._top_level):
             self._levels[level].clear()
         if not reached:

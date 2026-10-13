@@ -1,11 +1,11 @@
-"""The 32-bit Mersenne Twister, as `std::mt19937`, so a seed jitters prices as the C++ router does."""
+"""The 32-bit Mersenne Twister, for the random net order and a seed's price jitter."""
 
 comptime _N = 624
 comptime _M = 397
 
 
 struct MersenneTwister(Movable):
-    """`std::mt19937`."""
+    """The 32-bit Mersenne Twister (MT19937), seeded as `std::mt19937` is."""
 
     var _state: Array[UInt32, _N]
     var _index: Int
@@ -41,8 +41,7 @@ struct MersenneTwister(Movable):
         return y
 
     def uniform(mut self, high: Float32) -> Float32:
-        """libstdc++'s `uniform_real_distribution<float>(0, high)`: one draw, scaled to [0, 1).
-        """
+        """A float in [0, `high`): one 32-bit draw scaled to [0, 1)."""
         var unit = Float32(self.next_u32()) / Float32(4294967296.0)
         if unit >= 1.0:
             unit = Float32(0.99999994)  # nextafter(1.0f, 0.0f)
