@@ -1,0 +1,32 @@
+# Settings for this board. Each table shows its defaults; docs/project-interface.md in
+# the pcbkit repository describes every key.
+
+[board]
+stem = "spotmicro_carrier"                # KiCad file stem: kicad/<stem>.kicad_pcb
+title = "Spotmicro Carrier"               # shown in the title block
+rev = "A"
+fab_name = "Spotmicro_Carrier_revA"       # prefix of the files for the fab house
+
+[stackup]
+layers = 2
+thickness_mm = 1.6
+copper_mm = 0.035              # 1 oz: the LM74502 and INA226 pads are 0.15 mm apart,
+                               # under PCBWay's 2 oz spacing; pours carry the current
+
+[route]
+freerouting_passes = 40
+tries = 3
+stall_timeout_s = 90           # how long Freerouting may take to start routing
+
+[stitch]
+pitch_mm = 5.0
+gap_limit_mm = 3.4
+
+[fab]
+profile = "pcbway"
+
+[checks]
+# kicad: ERC and DRC. outputs: the fab files describe the board. Add "fab" before you
+# order: it checks PCBWay's limits and the polarity marks, with the numbers already in
+# specs.py. Two of its checks skip until the board has an IC to decouple or an I2C bus.
+groups = ["kicad", "outputs", "copper", "fab"]

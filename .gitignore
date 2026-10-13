@@ -1,0 +1,7 @@
+# Built routers: see README for the build commands
+/mojo/negotiate
+/negotiate6
+__pycache__/
+.pytest_cache/
+# KiCad's per-user view settings
+*.kicad_prl
