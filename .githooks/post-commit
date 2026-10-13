@@ -1,0 +1,21 @@
+#!/bin/sh
+# Pushes Backlog.md's own commits, so the board on GitHub (and anything that
+# reads it there, such as the Backlog.md connector) matches the local backlog.
+#
+# Backlog.md's auto_commit commits only backlog/ files but never pushes. This
+# pushes only when every unpushed commit on the branch touches nothing outside
+# backlog/, so code commits are never pushed by surprise.
+#
+# Enabled per clone with: git config core.hooksPath .githooks
+
+branch=$(git symbolic-ref --quiet --short HEAD) || exit 0
+upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null) || exit 0
+
+outside=$(git diff --name-only "$upstream" HEAD -- . ':(exclude)backlog/')
+if [ -n "$outside" ]; then
+  echo "post-commit: not pushing; unpushed commits touch files outside backlog/" >&2
+  exit 0
+fi
+
+git push --quiet "${upstream%%/*}" "HEAD:$branch" ||
+  echo "post-commit: pushing the backlog change failed; push by hand" >&2

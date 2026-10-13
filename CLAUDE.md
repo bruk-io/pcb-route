@@ -1,3 +1,7 @@
+## Repository setup
+
+Run `git config core.hooksPath .githooks` once per clone. Backlog.md auto-commits its own changes (`auto_commit: true`); the post-commit hook then pushes them, but only when every unpushed commit touches nothing outside `backlog/`.
+
 
 <!-- BACKLOG.MD GUIDELINES START -->
 <!-- backlog.md-instructions-version: 1.53.0 -->
