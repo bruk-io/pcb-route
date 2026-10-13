@@ -5,8 +5,10 @@ status: To Do
 assignee:
   - '@bruk'
 created_date: '2026-10-13 02:03'
+updated_date: '2026-10-13 03:56'
 labels:
   - size-3
+milestone: m-3
 dependencies:
   - TASK-1.6
   - TASK-1.7
