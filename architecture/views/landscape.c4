@@ -1,0 +1,7 @@
+// Estate-wide views: system landscape level only.
+views {
+  view index {
+    title 'System Landscape - pcb-route'
+    include *
+  }
+}

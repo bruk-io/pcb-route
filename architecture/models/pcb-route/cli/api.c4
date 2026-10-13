@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute.cli {
+    api = component 'Public API' {
+      technology 'Mojo package'
+      description 'The one surface a library user imports: read a design, build or patch a grid, plan what to keep, route, write a session'
+    }
+  }
+}

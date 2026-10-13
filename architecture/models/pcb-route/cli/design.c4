@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute.cli {
+    design = component 'Design' {
+      technology 'Mojo'
+      description 'The board as data (layers, nets, pads, tracks, keep-outs, rules), read from a design file'
+    }
+  }
+}

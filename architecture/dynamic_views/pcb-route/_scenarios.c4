@@ -1,0 +1,13 @@
+// Single-system scenarios for pcb-route. Explicit endpoints, container level.
+views {
+  dynamic view pcbRouteReroute {
+    title 'Dynamic - Reroute after an edit'
+    designer -> pcbRoute.cli 'reroutes the edited board, given the previous session, with'
+    pcbRoute.cli -> pcbRoute.kicadReader 'runs, as a child process, to read the edited board'
+    pcbRoute.kicadReader -> kicad 'reads the board and its rules, through pcbnew, from'
+    pcbRoute.kicadReader -> pcbRoute.cache 'writes the design file to'
+    pcbRoute.cli -> pcbRoute.cache 'loads the design and the previous grid, patches the grid, stores it in'
+    designer <- pcbRoute.cli 'writes the new session, reused pieces as they were, for'
+    include pcbRoute
+  }
+}

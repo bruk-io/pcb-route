@@ -1,0 +1,6 @@
+views {
+  view pcbRouteCliComponents of pcbRoute.cli {
+    title 'Components - pcb-route command line'
+    include *
+  }
+}

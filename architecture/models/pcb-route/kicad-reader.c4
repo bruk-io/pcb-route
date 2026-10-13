@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute {
+    kicadReader = container 'KiCad reader' {
+      technology "Python under KiCad's interpreter (3.13), pcbnew, stdlib only"
+      description 'Reads a KiCad board and its design rules, and writes them out as a design file; the only code that imports pcbnew'
+    }
+  }
+}

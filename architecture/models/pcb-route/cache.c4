@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute {
+    cache = blobStore 'Cache' {
+      technology 'Files (~/.cache/pcb-route or PCB_ROUTE_CACHE)'
+      description 'Design files and the grids built from them, keyed by board, so a reroute patches a stored grid instead of building one'
+    }
+  }
+}

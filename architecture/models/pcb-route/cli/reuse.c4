@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute.cli {
+    reuse = component 'Reuse' {
+      technology 'Mojo'
+      description 'Works out which pieces of a previous route still stand on the edited grid'
+    }
+  }
+}

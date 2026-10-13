@@ -1,0 +1,105 @@
+// Canonical C4 specification for LikeC4 — copy as _spec.c4 into every project.
+// These are the ONLY kinds allowed. Each kind sets `notation`, which LikeC4
+// uses to auto-generate the diagram legend (C4 requires a key/legend).
+//
+// Semantic mapping to C4 abstractions:
+//   person                                        -> Person
+//   softwareSystem, externalSystem                -> Software System
+//   container, webapp, mobileApp, database,
+//   queue, blobStore                              -> Container
+//   component                                     -> Component
+// (Code level is intentionally not modeled — generate from IDE tooling on demand.)
+
+specification {
+
+  element person {
+    notation 'Person'
+    style {
+      shape person
+      color secondary
+    }
+  }
+
+  element softwareSystem {
+    notation 'Software System'
+    style {
+      opacity 10%
+    }
+  }
+
+  element externalSystem {
+    notation 'External Software System'
+    style {
+      color muted
+    }
+  }
+
+  element container {
+    notation 'Container'
+    style {
+      opacity 10%
+    }
+  }
+
+  element webapp {
+    notation 'Container: Web/Single-Page App'
+    style {
+      shape browser
+    }
+  }
+
+  element mobileApp {
+    notation 'Container: Mobile App'
+    style {
+      shape mobile
+    }
+  }
+
+  element database {
+    notation 'Container: Database'
+    style {
+      shape storage
+    }
+  }
+
+  element queue {
+    notation 'Container: Queue / Topic'
+    style {
+      shape queue
+    }
+  }
+
+  element blobStore {
+    notation 'Container: Blob / File Store'
+    style {
+      shape bucket
+    }
+  }
+
+  element component {
+    notation 'Component'
+  }
+
+  // One optional relationship kind: async messaging. Everything else uses
+  // plain `->` with title + technology. Do not add business-semantic kinds.
+  relationship async {
+    notation 'Asynchronous (via broker/queue)'
+    line dotted
+  }
+
+  // Deployment node kinds (used only in `deployment { }` blocks — these are
+  // infrastructure, not model abstractions, so they don't break the whitelist).
+  deploymentNode environment
+  deploymentNode zone
+  deploymentNode node
+
+  // Tags: lifecycle annotation (below) plus, optionally, pattern-role tags
+  // from references/profiles/*.c4 (scaffold.sh --profile layered|hexagonal|cqrs).
+  // Pattern tags are namespaced `<pattern>-<role>` (e.g. #layered-domain,
+  // #hexagonal-port) and ANNOTATE components — they never replace
+  // capability-based names, and one structural pattern per container.
+  // No other ad-hoc tag taxonomies.
+  tag external
+  tag deprecated
+  tag planned
+}

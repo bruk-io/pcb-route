@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute {
+    cli = container 'Command line' {
+      technology 'Python 3.15, Click; Mojo core as an extension module'
+      description 'The pcb-route command: parses arguments, keeps the cache, runs the KiCad reader, and routes through the Mojo core in the same process'
+    }
+  }
+}

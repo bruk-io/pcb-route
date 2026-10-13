@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute.cli {
+    router = component 'Router' {
+      technology 'Mojo'
+      description 'Negotiated-congestion A* with kept copper, via passes and tidying; stops between nets when asked'
+    }
+  }
+}

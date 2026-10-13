@@ -1,0 +1,5 @@
+// Multi-system scenarios (a flow that touches more than one software system).
+// Single-system scenarios live in dynamic_views/<system>/.
+// Steps stay at the system/container level; use explicit endpoints (no it/this).
+views {
+}

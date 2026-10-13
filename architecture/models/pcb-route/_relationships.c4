@@ -1,0 +1,36 @@
+// Intra-system relationships for pcb-route, at component level where the
+// command line has components; container-level edges are derived from them.
+model {
+  designer -> pcbRoute.cli.commandLine 'routes and reroutes boards with'
+
+  pcbRoute.cli.commandLine -> pcbRoute.kicadReader 'runs to read a KiCad board' {
+    technology 'child process'
+  }
+  pcbRoute.kicadReader -> kicad 'reads the board and its design rules through' {
+    technology 'pcbnew Python API'
+  }
+  pcbRoute.kicadReader -> pcbRoute.cache 'writes design files to' {
+    technology 'files (design S-expressions)'
+  }
+  pcbRoute.cli.commandLine -> pcbRoute.cache 'keys and prunes' {
+    technology 'files'
+  }
+  pcbRoute.cli.design -> pcbRoute.cache 'reads design files from' {
+    technology 'files (design S-expressions)'
+  }
+  pcbRoute.cli.grid -> pcbRoute.cache 'stores and loads grids in' {
+    technology 'files (grid store format)'
+  }
+
+  pcbRoute.cli.commandLine -> pcbRoute.cli.bindings 'routes boards through'
+  pcbRoute.cli.bindings -> pcbRoute.cli.api 'forwards Python calls to'
+  pcbRoute.cli.api -> pcbRoute.cli.design 'reads designs with'
+  pcbRoute.cli.api -> pcbRoute.cli.grid 'builds and patches grids with'
+  pcbRoute.cli.api -> pcbRoute.cli.reuse 'plans what to keep with'
+  pcbRoute.cli.api -> pcbRoute.cli.router 'routes with'
+  pcbRoute.cli.api -> pcbRoute.cli.specctra 'reads and writes sessions with'
+  pcbRoute.cli.grid -> pcbRoute.cli.design 'rasterises'
+  pcbRoute.cli.reuse -> pcbRoute.cli.grid 'checks old pieces against'
+  pcbRoute.cli.router -> pcbRoute.cli.grid 'routes on'
+  pcbRoute.cli.specctra -> pcbRoute.cli.design 'names nets and layers from'
+}

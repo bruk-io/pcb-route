@@ -1,0 +1,6 @@
+views {
+  view pcbRouteContext of pcbRoute {
+    title 'System Context - pcb-route'
+    include pcbRoute, designer, pcbkit, kicad
+  }
+}

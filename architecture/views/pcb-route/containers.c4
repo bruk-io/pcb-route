@@ -1,0 +1,6 @@
+views {
+  view pcbRouteContainers of pcbRoute {
+    title 'Containers - pcb-route'
+    include *
+  }
+}

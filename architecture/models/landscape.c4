@@ -1,0 +1,16 @@
+// LANDSCAPE LAYER: people, external systems and cross-system relationships.
+// Software systems are declared under models/<system>/.
+model {
+  designer = person 'Board designer' {
+    description 'Lays out boards in KiCad and routes them with pcb-route'
+  }
+  kicad = externalSystem 'KiCad 10' {
+    description 'The board editor; its pcbnew Python API reads boards and their design rules'
+  }
+  pcbkit = externalSystem 'pcbkit' {
+    description 'Board-as-code tool that routes the boards it builds with pcb-route'
+  }
+
+  designer -> kicad 'lays out boards and imports sessions in'
+  pcbkit -> pcbRoute 'routes the boards it builds with'
+}

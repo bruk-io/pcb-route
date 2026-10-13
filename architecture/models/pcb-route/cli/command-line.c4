@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute.cli {
+    commandLine = component 'Command' {
+      technology 'Python, Click'
+      description 'Arguments, cache keys and pruning, running the KiCad reader, the exit code and the log; holds no routing logic'
+    }
+  }
+}

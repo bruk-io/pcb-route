@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute.cli {
+    grid = component 'Grid' {
+      technology 'Mojo'
+      description 'Rasterises a design into per-layer cells, patches a stored grid after an edit, and owns the grid store format'
+    }
+  }
+}

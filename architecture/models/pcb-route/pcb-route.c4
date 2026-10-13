@@ -1,0 +1,7 @@
+// Software system: pcb-route. Declared top-level (no extend).
+// Containers live in sibling files; the command line's components under cli/.
+model {
+  pcbRoute = softwareSystem 'pcb-route' {
+    description 'Routes KiCad boards, and reroutes them after an edit, keeping what the edit left standing'
+  }
+}

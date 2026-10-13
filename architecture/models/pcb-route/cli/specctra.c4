@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute.cli {
+    specctra = component 'Specctra' {
+      technology 'Mojo'
+      description 'Reads a previous session and writes the new one, reused pieces as they were'
+    }
+  }
+}

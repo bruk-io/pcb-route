@@ -1,0 +1,8 @@
+model {
+  extend pcbRoute.cli {
+    bindings = component 'Python bindings' {
+      technology 'Mojo Python extension module'
+      description 'Turns Python calls into calls on the public API, and Ctrl-C into a stop request; no logic of its own'
+    }
+  }
+}
